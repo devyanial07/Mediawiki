@@ -1,0 +1,13 @@
+[Unit]
+Description=mediawiki-containers
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+WorkingDirectory=/srv/mediawiki-containers
+ExecStart=/srv/mediawiki-containers/mediawiki-containers start
+ExecStop=/srv/mediawiki-containers/mediawiki-containers stop
+
+[Install]
+WantedBy=multi-user.target
