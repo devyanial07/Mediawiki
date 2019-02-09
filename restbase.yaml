@@ -1,0 +1,43 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: restbase-deploy
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        service_name: restbase
+    spec:
+      containers:
+        - name: mediawiki-node-services
+          image: wikimedia/mediawiki-node-services:0.2.3
+          env:
+            - name: MEDIAWIKI_API_URL
+              value: http://mediawiki-svc/api.php
+            - name: MATHOID_HOST_PORT
+              value: http://mathoid-svc:10044
+            - name: MOBILEAPPS_URI
+              value: http://mobileapps-svc:8888
+            - name: CITOID_URI
+              value: http://citoid-svc:1970
+          volumeMounts:
+            - name: node-services-storage
+              mountPath: /data
+
+      volumes:
+        - name: node-services-storage
+          hostPath:
+            path: /var/lib/mediawiki-containers/node-services
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restbase-svc
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7231
+    protocol: TCP
+  selector:
+    service_name: restbase
