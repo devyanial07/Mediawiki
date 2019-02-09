@@ -11,4 +11,4 @@ spec:
       - path: /
         backend:
           serviceName: mediawiki-svc
-          servicePort: 80
+          servicePort: 8080
