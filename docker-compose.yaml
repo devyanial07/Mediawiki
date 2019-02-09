@@ -1,0 +1,56 @@
+mediawiki:
+  image: wikimedia/mediawiki
+  ports:
+    - "80:80"
+  dns: [172.17.42.1]
+  links:
+    - mysql
+    - node-services
+    - dnsdock
+  volumes:
+    - /var/lib/mediawiki-containers/mediawiki:/data:rw
+    # Inject our specific settings
+    - ./conf/mediawiki:/conf:ro
+  environment:
+    - MEDIAWIKI_SITE_SERVER=//localhost
+    - MEDIAWIKI_SITE_NAME=MediaWiki
+    - MEDIAWIKI_SITE_LANG=en
+    - MEDIAWIKI_ADMIN_USER=admin
+    - MEDIAWIKI_ADMIN_PASS=rosebud
+    - MEDIAWIKI_UPDATE=true
+    - MEDIAWIKI_VERSION=1.25.3
+    - MEDIAWIKI_DB_USER=root
+    - MEDIAWIKI_DB_HOST=mysql.docker
+
+    # Link to node services
+    - MEDIAWIKI_RESTBASE_URL=http://mediawiki-node-services.docker:7231/localhost/v1
+
+node-services:
+  image: wikimedia/mediawiki-node-services
+  dns: [172.17.42.1]
+  # Temporarily expose RB port directly.
+  # TODO: Set up rewrite at /api/rest_v1/.
+  ports:
+    - "7231:7231"
+  volumes:
+    - /var/lib/mediawiki-containers/node-services:/data
+  environment:
+    - MEDIAWIKI_API_URL=http://mediawiki.docker/api.php
+
+mysql:
+  image: mysql
+  dns: [172.17.42.1]
+  volumes:
+    - /var/lib/mediawiki-containers/mysql:/var/lib/mysql:rw
+  environment:
+    - MYSQL_ROOT_PASSWORD=password
+
+# Light-weight DNS resolver to allow containers to address each other by name.
+# Docker-compose's `link` mechanism only supports this one way, which is not
+# sufficient for pairs like node-services & mediawiki.
+dnsdock:
+  image: tonistiigi/dnsdock
+  volumes:
+    - /var/run/docker.sock:/run/docker.sock
+  ports:
+    - 172.17.42.1:53:53/udp
